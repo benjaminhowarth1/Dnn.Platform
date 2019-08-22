@@ -728,7 +728,11 @@
 
         getChildren: function (parentId, sortOrder, searchText, onGetChildrenCallback) {
             var onGetChildrenHandler = $.proxy(this._onGetChildren, this, onGetChildrenCallback);
-            this._callGet({ parentId: parentId, sortOrder: sortOrder, searchText: searchText, includeAllTypes: true }, onGetChildrenHandler, this.options.getNodeDescendantsMethod);
+            var callGetParams = { parentId: parentId, sortOrder: sortOrder, searchText: searchText, includeAllTypes: true };
+            if (this.options.includeDisabled) {
+                callGetParams.includeDisabled = this.options.includeDisabled;
+            }
+            this._callGet(callGetParams, onGetChildrenHandler, this.options.getNodeDescendantsMethod);
         },
 
         _onGetChildren: function(onGetChildrenCallback, data, textStatus, jqXhr) {
@@ -738,12 +742,20 @@
 
         search: function(searchText, sortOrder, onSearchCallback) {
             var onSearchHandler = $.proxy(this._onGetTree, this, onSearchCallback);
-            this._callGet({ searchText: searchText, sortOrder: sortOrder, includeAllTypes: true }, onSearchHandler, this.options.searchTreeMethod);
+            var callGetParams = { searchText: searchText, sortOrder: sortOrder, includeAllTypes: true };
+            if (this.options.includeDisabled) {
+                callGetParams.includeDisabled = this.options.includeDisabled;
+            }
+            this._callGet(callGetParams, onSearchHandler, this.options.searchTreeMethod);
         },
 
         getTree: function (sortOrder, onGetFirstLevelItemsCallback) {
             var onGetFirstLevelItemsHandler = $.proxy(this._onGetTree, this, onGetFirstLevelItemsCallback);
-            this._callGet({ sortOrder: sortOrder, includeAllTypes: true }, onGetFirstLevelItemsHandler, this.options.getTreeMethod);
+            var callGetParams = { sortOrder: sortOrder, includeAllTypes: true };
+            if (this.options.includeDisabled) {
+                callGetParams.includeDisabled = this.options.includeDisabled;
+            }
+            this._callGet(callGetParams, onGetFirstLevelItemsHandler, this.options.getTreeMethod);
         },
 
         sortTree: function (sortOrder, rootNode, searchText, onSortTreeCallback) {

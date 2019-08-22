@@ -23,16 +23,6 @@
 
 #region Usings
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Configuration.Provider;
-using System.Data;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Web;
-using System.Web.Security;
-
 using DotNetNuke.Common;
 using DotNetNuke.Common.Utilities;
 using DotNetNuke.Data;
@@ -44,10 +34,18 @@ using DotNetNuke.Entities.Users.Membership;
 using DotNetNuke.Entities.Users.Social;
 using DotNetNuke.Instrumentation;
 using DotNetNuke.Services.Exceptions;
-using DotNetNuke.Services.Log.EventLog;
 //DNN-4016
-using DotNetNuke.Services.Authentication;
 using DotNetNuke.Services.Localization;
+using DotNetNuke.Services.Log.EventLog;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Configuration.Provider;
+using System.Data;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Web;
+using System.Web.Security;
 
 #endregion
 
@@ -67,12 +65,12 @@ namespace DotNetNuke.Security.Membership
     /// -----------------------------------------------------------------------------
     public class AspNetMembershipProvider : MembershipProvider
     {
-        private static readonly ILog Logger = LoggerSource.Instance.GetLogger(typeof (AspNetMembershipProvider));
+        private static readonly ILog Logger = LoggerSource.Instance.GetLogger(typeof(AspNetMembershipProvider));
 
         #region Private Members
 
         private readonly DataProvider _dataProvider = DataProvider.Instance();
-        private readonly IEnumerable<string> _socialAuthProviders = new  List<string>() {"Facebook", "Google", "Twitter", "LiveID"}; 
+        private readonly IEnumerable<string> _socialAuthProviders = new List<string>() { "Facebook", "Google", "Twitter", "LiveID" };
 
         #endregion
 
@@ -202,7 +200,7 @@ namespace DotNetNuke.Security.Membership
         {
             if (Host.AutoAccountUnlockDuration != 0)
             {
-                if (aspNetUser.LastLockoutDate < DateTime.Now.AddMinutes(-1*Host.AutoAccountUnlockDuration))
+                if (aspNetUser.LastLockoutDate < DateTime.Now.AddMinutes(-1 * Host.AutoAccountUnlockDuration))
                 {
                     //Unlock user in Data Store
                     if (aspNetUser.UnlockUser())
@@ -217,44 +215,30 @@ namespace DotNetNuke.Security.Membership
         private UserCreateStatus CreateDNNUser(ref UserInfo user)
         {
             var objSecurity = PortalSecurity.Instance;
-            string userName = objSecurity.InputFilter(user.Username,
-                                                      PortalSecurity.FilterFlag.NoScripting |
-                                                      PortalSecurity.FilterFlag.NoAngleBrackets |
-                                                      PortalSecurity.FilterFlag.NoMarkup);
-            string email = objSecurity.InputFilter(user.Email,
-                                                   PortalSecurity.FilterFlag.NoScripting |
-                                                   PortalSecurity.FilterFlag.NoAngleBrackets |
-                                                   PortalSecurity.FilterFlag.NoMarkup);
-            string lastName = objSecurity.InputFilter(user.LastName,
-                                                      PortalSecurity.FilterFlag.NoScripting |
-                                                      PortalSecurity.FilterFlag.NoAngleBrackets |
-                                                      PortalSecurity.FilterFlag.NoMarkup);
-            string firstName = objSecurity.InputFilter(user.FirstName,
-                                                       PortalSecurity.FilterFlag.NoScripting |
-                                                       PortalSecurity.FilterFlag.NoAngleBrackets |
-                                                       PortalSecurity.FilterFlag.NoMarkup);
-            var createStatus = UserCreateStatus.Success;
-            string displayName = objSecurity.InputFilter(user.DisplayName,
-                                                         PortalSecurity.FilterFlag.NoScripting |
-                                                         PortalSecurity.FilterFlag.NoAngleBrackets |
-                                                         PortalSecurity.FilterFlag.NoMarkup);
-            if (displayName.Contains("<") || displayName.Contains(">"))
+            var filterFlags = PortalSecurity.FilterFlag.NoScripting | PortalSecurity.FilterFlag.NoAngleBrackets | PortalSecurity.FilterFlag.NoMarkup;
+            user.Username = objSecurity.InputFilter(user.Username, filterFlags);
+            user.Email = objSecurity.InputFilter(user.Email, filterFlags);
+            user.LastName = objSecurity.InputFilter(user.LastName, filterFlags);
+            user.FirstName = objSecurity.InputFilter(user.FirstName, filterFlags);
+            user.DisplayName = objSecurity.InputFilter(user.DisplayName, filterFlags);
+            if (user.DisplayName.Contains("<") || user.DisplayName.Contains(">"))
             {
-                displayName = HttpUtility.HtmlEncode(displayName);
+                user.DisplayName = HttpUtility.HtmlEncode(user.DisplayName);
             }
-            bool updatePassword = user.Membership.UpdatePassword;
-            bool isApproved = user.Membership.Approved;
+            var updatePassword = user.Membership.UpdatePassword;
+            var isApproved = user.Membership.Approved;
+            var createStatus = UserCreateStatus.Success;
             try
             {
                 user.UserID =
                     Convert.ToInt32(_dataProvider.AddUser(user.PortalID,
-                                                          userName,
-                                                          firstName,
-                                                          lastName,
+                                                          user.Username,
+                                                          user.FirstName,
+                                                          user.LastName,
                                                           user.AffiliateID,
                                                           user.IsSuperUser,
-                                                          email,
-                                                          displayName,
+                                                          user.Email,
+                                                          user.DisplayName,
                                                           updatePassword,
                                                           isApproved,
                                                           UserController.Instance.GetCurrentUserInfo().UserID));
@@ -423,16 +407,16 @@ namespace DotNetNuke.Security.Membership
             if (bContinue)
             {
                 user = new UserInfo
-                    {
-                        PortalID = Null.SetNullInteger(dr["PortalID"]),
-                        IsSuperUser = Null.SetNullBoolean(dr["IsSuperUser"]),
-                        IsDeleted = Null.SetNullBoolean(dr["IsDeleted"]),
-                        UserID = Null.SetNullInteger(dr["UserID"]),
-                        DisplayName = Null.SetNullString(dr["DisplayName"]),
-                        Username = Null.SetNullString(dr["Username"]),
-                        Email = Null.SetNullString(dr["Email"]),
-                        AffiliateID = Null.SetNullInteger(dr["AffiliateID"])
-                    };
+                {
+                    PortalID = Null.SetNullInteger(dr["PortalID"]),
+                    IsSuperUser = Null.SetNullBoolean(dr["IsSuperUser"]),
+                    IsDeleted = Null.SetNullBoolean(dr["IsDeleted"]),
+                    UserID = Null.SetNullInteger(dr["UserID"]),
+                    DisplayName = Null.SetNullString(dr["DisplayName"]),
+                    Username = Null.SetNullString(dr["Username"]),
+                    Email = Null.SetNullString(dr["Email"]),
+                    AffiliateID = Null.SetNullInteger(dr["AffiliateID"])
+                };
                 user.AffiliateID = Null.SetNullInteger(Null.SetNull(dr["AffiliateID"], user.AffiliateID));
 
                 UserController.GetUserMembership(user);
@@ -509,13 +493,13 @@ namespace DotNetNuke.Security.Membership
                 if (bContinue)
                 {
                     user = new UserInfo
-                        {
-                            PortalID = Null.SetNullInteger(dr["PortalID"]),
-                            IsSuperUser = Null.SetNullBoolean(dr["IsSuperUser"]),
-                            UserID = Null.SetNullInteger(dr["UserID"]),
-                            DisplayName = Null.SetNullString(dr["DisplayName"]),
-                            LastIPAddress = Null.SetNullString(dr["LastIPAddress"])
-                        };
+                    {
+                        PortalID = Null.SetNullInteger(dr["PortalID"]),
+                        IsSuperUser = Null.SetNullBoolean(dr["IsSuperUser"]),
+                        UserID = Null.SetNullInteger(dr["UserID"]),
+                        DisplayName = Null.SetNullString(dr["DisplayName"]),
+                        LastIPAddress = Null.SetNullString(dr["LastIPAddress"])
+                    };
 
                     var schema = dr.GetSchemaTable();
                     if (schema != null)
@@ -528,16 +512,22 @@ namespace DotNetNuke.Security.Membership
                         {
                             user.VanityUrl = Null.SetNullString(dr["VanityUrl"]);
                         }
-                    }
-
-                    user.AffiliateID = Null.SetNullInteger(Null.SetNull(dr["AffiliateID"], user.AffiliateID));
-                    user.Username = Null.SetNullString(dr["Username"]);
-                    UserController.GetUserMembership(user);
-                    user.Email = Null.SetNullString(dr["Email"]);
-                    user.Membership.UpdatePassword = Null.SetNullBoolean(dr["UpdatePassword"]);
-
-                    if (schema != null)
-                    {
+                        if (schema.Select("ColumnName = 'HasAgreedToTerms'").Length > 0)
+                        {
+                            user.HasAgreedToTerms = Null.SetNullBoolean(dr["HasAgreedToTerms"]);
+                        }
+                        if (schema.Select("ColumnName = 'HasAgreedToTermsOn'").Length > 0)
+                        {
+                            user.HasAgreedToTermsOn = Null.SetNullDateTime(dr["HasAgreedToTermsOn"]);
+                        }
+                        else
+                        {
+                            user.HasAgreedToTermsOn = Null.NullDate;
+                        }
+                        if (schema.Select("ColumnName = 'RequestsRemoval'").Length > 0)
+                        {
+                            user.RequestsRemoval = Null.SetNullBoolean(dr["RequestsRemoval"]);
+                        }
                         if (schema.Select("ColumnName = 'PasswordResetExpiration'").Length > 0)
                         {
                             user.PasswordResetExpiration = Null.SetNullDateTime(dr["PasswordResetExpiration"]);
@@ -547,6 +537,13 @@ namespace DotNetNuke.Security.Membership
                             user.PasswordResetToken = Null.SetNullGuid(dr["PasswordResetToken"]);
                         }
                     }
+
+                    user.AffiliateID = Null.SetNullInteger(Null.SetNull(dr["AffiliateID"], user.AffiliateID));
+                    user.Username = Null.SetNullString(dr["Username"]);
+                    UserController.GetUserMembership(user);
+                    user.Email = Null.SetNullString(dr["Email"]);
+                    user.Membership.UpdatePassword = Null.SetNullBoolean(dr["UpdatePassword"]);
+
                     if (!user.IsSuperUser)
                     {
                         user.Membership.Approved = Null.SetNullBoolean(dr["Authorised"]);
@@ -632,7 +629,7 @@ namespace DotNetNuke.Security.Membership
             return System.Web.Security.Membership.GetUser(new Guid(userKey));
         }
 
-       
+
         public override UserInfo GetUserByAuthToken(int portalId, string userToken, string authType)
         {
             IDataReader dr = _dataProvider.GetUserByAuthToken(portalId, userToken, authType);
@@ -657,15 +654,15 @@ namespace DotNetNuke.Security.Membership
                 membershipUser.IsApproved = user.Membership.Approved;
             }
 
-	        try
-	        {
-		        System.Web.Security.Membership.UpdateUser(membershipUser);
-	        }
-	        catch (ProviderException ex)
-	        {
-				throw new Exception(Localization.GetExceptionMessage("UpdateUserMembershipFailed", "Asp.net membership update user failed."), ex);
-	        }
-            
+            try
+            {
+                System.Web.Security.Membership.UpdateUser(membershipUser);
+            }
+            catch (ProviderException ex)
+            {
+                throw new Exception(Localization.GetExceptionMessage("UpdateUserMembershipFailed", "Asp.net membership update user failed."), ex);
+            }
+
             DataCache.RemoveCache(GetCacheKey(user.Username));
         }
 
@@ -756,10 +753,10 @@ namespace DotNetNuke.Security.Membership
             {
                 throw new ArgumentException(Localization.GetExceptionMessage("InvalidUserName", "The username specified is invalid."));
             }
-          
+
             var valid = UserController.Instance.IsValidUserName(userName);
 
-		    if (!valid)
+            if (!valid)
             {
                 throw new ArgumentException(Localization.GetExceptionMessage("InvalidUserName", "The username specified is invalid."));
             }
@@ -791,7 +788,7 @@ namespace DotNetNuke.Security.Membership
                                UserController.Instance.GetCurrentUserInfo().UserID,
                                EventLogController.EventLogType.USERNAME_UPDATED);
 
-            DataCache.ClearCache();          
+            DataCache.ClearCache();
         }
 
         /// -----------------------------------------------------------------------------
@@ -808,13 +805,13 @@ namespace DotNetNuke.Security.Membership
         public override bool ChangePassword(UserInfo user, string oldPassword, string newPassword)
         {
             MembershipUser aspnetUser = GetMembershipUser(user);
-           
+
             var m = new MembershipPasswordController();
             if (m.IsPasswordInHistory(user.UserID, user.PortalID, newPassword))
             {
                 return false;
             }
-            
+
             if (string.IsNullOrEmpty(oldPassword))
             {
                 aspnetUser.UnlockUser();
@@ -1025,6 +1022,7 @@ namespace DotNetNuke.Security.Membership
         /// </remarks>
         /// <param name="timeWindow">Time Window in Minutes</param>
         /// -----------------------------------------------------------------------------
+        [Obsolete("Support for users online was removed in 8.x, other solutions exist outside of the DNN Platform.  Scheduled removal in v11.0.0.")]
         public override void DeleteUsersOnline(int timeWindow)
         {
             _dataProvider.DeleteUsersOnline(timeWindow);
@@ -1065,6 +1063,7 @@ namespace DotNetNuke.Security.Membership
         /// <param name="portalId">The Id of the Portal</param>
         /// <returns>An ArrayList of UserInfo objects</returns>
         /// -----------------------------------------------------------------------------
+        [Obsolete("Support for users online was removed in 8.x, other solutions exist outside of the DNN Platform.  Scheduled removal in v11.0.0.")]
         public override ArrayList GetOnlineUsers(int portalId)
         {
             int totalRecords = 0;
@@ -1136,7 +1135,7 @@ namespace DotNetNuke.Security.Membership
             UserInfo objUserInfo = FillUserInfo(portalId, dr, true);
             return objUserInfo;
         }
-        
+
         /// -----------------------------------------------------------------------------
         /// <summary>
         /// GetUserByUserName retrieves a User from the DataStore. Supports user caching in memory cache.
@@ -1439,34 +1438,34 @@ namespace DotNetNuke.Security.Membership
                                                                        includeDeleted, superUsersOnly), ref totalRecords);
         }
 
-		/// -----------------------------------------------------------------------------
-		/// <summary>
-		/// GetUsersByDisplayName gets all the users of the portal whose display name matches a provided
-		/// filter expression
-		/// </summary>
-		/// <remarks>If all records are required, (ie no paging) set pageSize = -1</remarks>
-		/// <param name="portalId">The Id of the Portal</param>
-		/// <param name="nameToMatch">The display name to use to find a match.</param>
-		/// <param name="pageIndex">The page of records to return.</param>
-		/// <param name="pageSize">The size of the page</param>
-		/// <param name="totalRecords">The total no of records that satisfy the criteria.</param>
-		/// <param name="includeDeleted">Include deleted users.</param>
-		/// <param name="superUsersOnly">Only select super users.</param>
-		/// <returns>An ArrayList of UserInfo objects.</returns>
-		/// -----------------------------------------------------------------------------
-		public override ArrayList GetUsersByDisplayName(int portalId, string nameToMatch, int pageIndex, int pageSize,
-													 ref int totalRecords, bool includeDeleted, bool superUsersOnly)
-		{
-			if (pageIndex == -1)
-			{
-				pageIndex = 0;
-				pageSize = int.MaxValue;
-			}
+        /// -----------------------------------------------------------------------------
+        /// <summary>
+        /// GetUsersByDisplayName gets all the users of the portal whose display name matches a provided
+        /// filter expression
+        /// </summary>
+        /// <remarks>If all records are required, (ie no paging) set pageSize = -1</remarks>
+        /// <param name="portalId">The Id of the Portal</param>
+        /// <param name="nameToMatch">The display name to use to find a match.</param>
+        /// <param name="pageIndex">The page of records to return.</param>
+        /// <param name="pageSize">The size of the page</param>
+        /// <param name="totalRecords">The total no of records that satisfy the criteria.</param>
+        /// <param name="includeDeleted">Include deleted users.</param>
+        /// <param name="superUsersOnly">Only select super users.</param>
+        /// <returns>An ArrayList of UserInfo objects.</returns>
+        /// -----------------------------------------------------------------------------
+        public override ArrayList GetUsersByDisplayName(int portalId, string nameToMatch, int pageIndex, int pageSize,
+                                                     ref int totalRecords, bool includeDeleted, bool superUsersOnly)
+        {
+            if (pageIndex == -1)
+            {
+                pageIndex = 0;
+                pageSize = int.MaxValue;
+            }
 
-			return FillUserCollection(portalId,
-									  _dataProvider.GetUsersByDisplayname(portalId, nameToMatch, pageIndex, pageSize,
-																	   includeDeleted, superUsersOnly), ref totalRecords);
-		}
+            return FillUserCollection(portalId,
+                                      _dataProvider.GetUsersByDisplayname(portalId, nameToMatch, pageIndex, pageSize,
+                                                                       includeDeleted, superUsersOnly), ref totalRecords);
+        }
 
         /// -----------------------------------------------------------------------------
         /// <summary>
@@ -1532,6 +1531,7 @@ namespace DotNetNuke.Security.Membership
         /// <param name="user">The user.</param>
         /// <returns>A Boolean indicating whether the user is online.</returns>
         /// -----------------------------------------------------------------------------
+        [Obsolete("Support for users online was removed in 8.x, other solutions exist outside of the DNN Platform.  Scheduled removal in v11.0.0.")]
         public override bool IsUserOnline(UserInfo user)
         {
             bool isOnline = false;
@@ -1539,7 +1539,7 @@ namespace DotNetNuke.Security.Membership
             if (objUsersOnline.IsEnabled())
             {
                 Hashtable userList = objUsersOnline.GetUserList();
-                var onlineUser = (OnlineUserInfo) userList[user.UserID.ToString()];
+                var onlineUser = (OnlineUserInfo)userList[user.UserID.ToString()];
                 if (onlineUser != null)
                 {
                     isOnline = true;
@@ -1611,28 +1611,28 @@ namespace DotNetNuke.Security.Membership
         /// method does not support RequiresQuestionAndAnswer
         /// </summary>
         /// <param name="user"></param>
-        public override bool ResetAndChangePassword(UserInfo user,string newPassword)
+        public override bool ResetAndChangePassword(UserInfo user, string newPassword)
         {
-	        return ResetAndChangePassword(user, newPassword, string.Empty);
+            return ResetAndChangePassword(user, newPassword, string.Empty);
         }
 
-		public override bool ResetAndChangePassword(UserInfo user, string newPassword, string answer)
-		{
-			if (RequiresQuestionAndAnswer && string.IsNullOrEmpty(answer))
-			{
-				return false;
-			}
+        public override bool ResetAndChangePassword(UserInfo user, string newPassword, string answer)
+        {
+            if (RequiresQuestionAndAnswer && string.IsNullOrEmpty(answer))
+            {
+                return false;
+            }
 
-			//Get AspNet MembershipUser
-			MembershipUser aspnetUser = GetMembershipUser(user);
+            //Get AspNet MembershipUser
+            MembershipUser aspnetUser = GetMembershipUser(user);
             if (aspnetUser.IsLockedOut)
             {
                 aspnetUser.UnlockUser();
             }
 
             string resetPassword = ResetPassword(user, answer);
-			return aspnetUser.ChangePassword(resetPassword, newPassword);
-		}
+            return aspnetUser.ChangePassword(resetPassword, newPassword);
+        }
 
         public override bool RestoreUser(UserInfo user)
         {
@@ -1670,6 +1670,50 @@ namespace DotNetNuke.Security.Membership
             }
             DataCache.RemoveCache(GetCacheKey(user.Username));
             return retValue;
+        }
+
+        /// -----------------------------------------------------------------------------
+        /// <summary>
+        /// User has agreed to terms and conditions for the portal
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        /// <param name="user">The agreeing user.</param>
+        /// -----------------------------------------------------------------------------
+        public override void UserAgreedToTerms(UserInfo user)
+        {
+            _dataProvider.UserAgreedToTerms(user.PortalID, user.UserID);
+        }
+
+        /// -----------------------------------------------------------------------------
+        /// <summary>
+        /// Reset all agreements on portal so all users need to agree again at next login
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        /// <param name="portalId">Portal for which to reset agreements.</param>
+        /// -----------------------------------------------------------------------------
+        public override void ResetTermsAgreement(int portalId)
+        {
+            _dataProvider.ResetTermsAgreement(portalId);
+        }
+
+        private static Random random = new Random();
+        private string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        /// <summary>
+        /// Sets a boolean on the user portal to indicate this user has requested that their account be deleted
+        /// </summary>
+        /// <param name="user">User requesting removal</param>
+        /// <param name="remove">True if user requests removal, false if the value needs to be reset.</param>
+        public override void UserRequestsRemoval(UserInfo user, bool remove)
+        {
+            _dataProvider.UserRequestsRemoval(user.PortalID, user.UserID, remove);
         }
 
         /// -----------------------------------------------------------------------------
@@ -1753,6 +1797,7 @@ namespace DotNetNuke.Security.Membership
         /// </summary>
         /// <param name="userList">List of users to update</param>
         /// -----------------------------------------------------------------------------
+        [Obsolete("Support for users online was removed in 8.x, other solutions exist outside of the DNN Platform.  Scheduled removal in v11.0.0.")]
         public override void UpdateUsersOnline(Hashtable userList)
         {
             _dataProvider.UpdateUsersOnline(userList);
@@ -1799,7 +1844,7 @@ namespace DotNetNuke.Security.Membership
 
             //Initialise Login Status to Failure
             loginStatus = UserLoginStatus.LOGIN_FAILURE;
-            
+
             DataCache.ClearUserCache(portalId, username);
             DataCache.ClearCache(GetCacheKey(username));
 
@@ -1825,23 +1870,23 @@ namespace DotNetNuke.Security.Membership
                     }
                     else
                     {
-                        loginStatus = UserLoginStatus.LOGIN_USERLOCKEDOUT;                      
+                        loginStatus = UserLoginStatus.LOGIN_USERLOCKEDOUT;
                     }
                 }
 
                 //Check in a verified situation whether the user is Approved
                 if (user.Membership.Approved == false && user.IsSuperUser == false)
                 {
-                    
+
                     //Check Verification code (skip for FB, Google, Twitter, LiveID as it has no verification code)
-                        if (_socialAuthProviders.Contains(authType) && String.IsNullOrEmpty(verificationCode))
+                    if (_socialAuthProviders.Contains(authType) && String.IsNullOrEmpty(verificationCode))
                     {
                         if (PortalController.Instance.GetCurrentPortalSettings().UserRegistration ==
-                            (int) Globals.PortalRegistrationType.PublicRegistration)
+                            (int)Globals.PortalRegistrationType.PublicRegistration)
                         {
                             user.Membership.Approved = true;
                             UserController.UpdateUser(portalId, user);
-                            UserController.ApproveUser(user);    
+                            UserController.ApproveUser(user);
                         }
                         else
                         {
@@ -1861,7 +1906,7 @@ namespace DotNetNuke.Security.Membership
                         }
                     }
 
-                }                
+                }
 
                 //Verify User Credentials
                 bool bValid = false;

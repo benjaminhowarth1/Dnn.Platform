@@ -69,7 +69,7 @@ using DotNetNuke.Services.Upgrade;
 using DotNetNuke.Services.Url.FriendlyUrl;
 using DotNetNuke.UI.Skins;
 using DotNetNuke.UI.Utilities;
-
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualBasic.CompilerServices;
 
 using DataCache = DotNetNuke.UI.Utilities.DataCache;
@@ -94,6 +94,7 @@ namespace DotNetNuke.Common
         public static readonly Regex BaseTagRegex = new Regex("<base[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         public static readonly Regex FileEscapingRegex = new Regex("[\\\\/]\\.\\.[\\\\/]", RegexOptions.Compiled);
         public static readonly Regex FileExtensionRegex = new Regex(@"\..+;", RegexOptions.Compiled);
+        public static readonly Regex FileValidNameRegex = new Regex(@"^(?!(?:PRN|AUX|CLOCK\$|NUL|CON|COM\d|LPT\d)(?:\..+)?$)[^\x00-\x1F\xA5\\?*:\"";|\/<>]+(?<![\s.])$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         public static readonly Regex ServicesFrameworkRegex = new Regex("/API/|DESKTOPMODULES/.+/API/", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         public static readonly string USERNAME_UNALLOWED_ASCII = "!\"#$%&'()*+,/:;<=>?[\\]^`{|}";
         
@@ -550,6 +551,14 @@ namespace DotNetNuke.Common
         public static Version DatabaseEngineVersion { get; set; }
 
         /// <summary>
+        /// Gets or sets the Dependency Service.
+        /// </summary>
+        /// <value>
+        /// The Dependency Service.
+        /// </value>
+        internal static IServiceProvider DependencyProvider { get; set; }
+
+        /// <summary>
         /// Redirects the specified URL.
         /// </summary>
         /// <param name="url">The URL.</param>
@@ -811,7 +820,7 @@ namespace DotNetNuke.Common
                 }
                 if (string.IsNullOrEmpty(cultureCode))
                 {
-                    cultureCode = PortalController.Instance.GetCurrentPortalSettings().DefaultLanguage;
+                    cultureCode = Thread.CurrentThread.CurrentCulture.Name;
                 }
             }
 
@@ -3828,8 +3837,7 @@ namespace DotNetNuke.Common
         }
         
         #region "Obsolete - retained for Binary Compatability"
-
-        // TODO:  These constants are deprecated but cannot be removed until the next batch of breaking change
+        
         // ****************************************************************************************
         // Constants are inlined in code and would require a rebuild of any module or skinobject
         // that may be using these constants.

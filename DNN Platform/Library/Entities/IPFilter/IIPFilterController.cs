@@ -42,9 +42,6 @@ namespace DotNetNuke.Entities.Host
 
         IList<IPFilterInfo> GetIPFilters();
 
-        [Obsolete("deprecated with 7.1.0 - please use IsIPBanned instead. Scheduled removal in v11.0.0.")]
-        void IsIPAddressBanned(string ipAddress);
-
         bool IsIPBanned(string ipAddress);
 
         bool IsAllowableDeny(string ipAddress, IPFilterInfo ipFilter);
